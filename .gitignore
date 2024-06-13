@@ -5,3 +5,6 @@ __pycache__/
 .idea
 .vscode
 dist
+*.db
+*.sqlite3
+*.sql

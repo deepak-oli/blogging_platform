@@ -2,7 +2,7 @@ from fastapi import APIRouter,Depends, HTTPException, status
 
 from app.services import categories
 from app.services.auth import Auth
-from app.schemas.categories import Category, CategoryBase
+from app.schemas.categories import Category
 
 router = APIRouter(dependencies=[Depends(Auth())])
 
@@ -17,7 +17,7 @@ def get_category_by_id(id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found.")
     return category
 
-@router.post('/categories', tags=["categories"], response_model=CategoryBase)
+@router.post('/categories', tags=["categories"], response_model=Category)
 def create_category(name: str):
     return categories.create_category(name)
 
