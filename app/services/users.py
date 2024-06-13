@@ -25,6 +25,7 @@ def get_users():
 
 def create_user(user: schemas.UserCreate):
     db_user = models.User(
+        name=user.name,
         email=user.email,
         hashed_password=get_password_hash(user.password)
     )

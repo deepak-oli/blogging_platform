@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.schemas.users import Token, UserCreate, User
+from app.schemas.users import Token, UserCreate, User, Login
 from app.services import auth, users
 
 
@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.post("/login/", tags=["auth"], response_model=Token)
-def login(request: UserCreate):
+def login(request: Login):
     return auth.login(request)
 
 
