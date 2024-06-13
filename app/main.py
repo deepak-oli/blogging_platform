@@ -1,8 +1,11 @@
 from fastapi import FastAPI
+from dotenv import load_dotenv
 
-from app.routers import users, auth, posts, comments, likes
+from app.routers import users, auth, posts, comments, likes, categories
 
 from app.config.database import create_tables
+
+load_dotenv()
 
 app = FastAPI()
 
