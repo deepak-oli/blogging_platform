@@ -76,6 +76,7 @@ def update_post(post_id: int, post: schemas.PostBase, categories: list[int]):
         user_id=db_post.user_id, 
         title=db_post.title,
         content=db_post.content,
+        header_image=db_post.header_image,
         categories=[get_category_by_id(category.id) for category in db_post.categories]
     )
 

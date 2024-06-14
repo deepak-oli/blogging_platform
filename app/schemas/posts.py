@@ -6,6 +6,7 @@ from app.schemas.categories import Category
 class PostBase(BaseModel):
     title: str
     content: str
+    header_image: str | None
 
 class PostCreate(PostBase):
     categories: List[int]
