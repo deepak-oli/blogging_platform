@@ -1,4 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException,status
+from sqlalchemy.orm import Session
+
+from app.config.database import get_db
 
 from app.services import posts
 from app.services.auth import Auth
@@ -7,11 +10,11 @@ from app.services.auth import Auth
 router = APIRouter(dependencies=[Depends(Auth())])
 
 @router.get("/posts/", tags=["posts"], response_model=list[posts.schemas.PostResponse])
-def read_posts():
-    return posts.get_posts()
+def read_posts(db:Session = Depends(get_db)):
+    return posts.get_posts(db)
 
 @router.post("/posts/", tags=["posts"])
-def create_post(new_post: posts.schemas.PostCreate, dependencies=Depends(Auth())):
+def create_post(new_post: posts.schemas.PostCreate, db:Session = Depends(get_db), dependencies=Depends(Auth())):
     user_id = dependencies['user_id']
 
     post = new_post.model_copy().model_dump()
@@ -22,24 +25,24 @@ def create_post(new_post: posts.schemas.PostCreate, dependencies=Depends(Auth())
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Categories is required.")
 
     for category_id in categories:
-        db_category = posts.get_category_by_id(category_id)
+        db_category = posts.get_category_by_id(db, category_id)
         if db_category is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found.")
 
-    return posts.create_post(user_id, posts.schemas.PostBase(**post), categories)
+    return posts.create_post(db, user_id, posts.schemas.PostBase(**post), categories)
 
 
 @router.get("/posts/{post_id}", tags=["posts"])
-def read_post(post_id: int):
-    db_post =  posts.get_post(post_id)
+def read_post(post_id: int, db:Session = Depends(get_db)):
+    db_post =  posts.get_post(db, post_id)
     if db_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
     return db_post
 
 @router.put("/posts/{post_id}", tags=["posts"])
-def update_post(post_id: int, new_post: posts.schemas.PostCreate, dependencies=Depends(Auth())):
+def update_post(post_id: int, new_post: posts.schemas.PostCreate, db:Session = Depends(get_db), dependencies=Depends(Auth())):
     user_id = dependencies['user_id']
-    db_post  = posts.get_post(post_id)
+    db_post  = posts.get_post(db, post_id)
 
     if db_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
@@ -54,22 +57,22 @@ def update_post(post_id: int, new_post: posts.schemas.PostCreate, dependencies=D
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Categories is required.")
 
     for category_id in categories:
-        db_category = posts.get_category_by_id(category_id)
+        db_category = posts.get_category_by_id(db, category_id)
         if db_category is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found.")
 
-    return posts.update_post(post_id, posts.schemas.PostBase(**post), categories)
+    return posts.update_post(db, post_id, posts.schemas.PostBase(**post), categories)
 
 @router.delete("/posts/{post_id}", tags=["posts"])
-def delete_post(post_id: int, dependencies=Depends(Auth())):
+def delete_post(post_id: int, db:Session = Depends(get_db), dependencies=Depends(Auth())):
     user_id = dependencies['user_id']
-    db_post = posts.get_post(post_id)
+    db_post = posts.get_post(db, post_id)
     if db_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
 
     if db_post.user_id != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
-    return posts.delete_post(post_id)
+    return posts.delete_post(db, post_id)
 
 
 # @router.patch("/posts/{post_id}", tags=["posts"])

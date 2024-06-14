@@ -1,24 +1,23 @@
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.models import posts as models
-from app.schemas import posts as schemas
 from app.models.categories import PostCategory
+
+from app.schemas import posts as schemas
+
 from .categories import get_category_by_id
 
 
-from app.config.database import get_db
-
-db = next(get_db())
-
-def get_posts():
+def get_posts(db:Session):
     return db.query(models.Post).all()
 
-def get_post(post_id: int):
+def get_post(db:Session, post_id: int):
     return db.query(models.Post).filter(models.Post.id == post_id).first()
 
-def create_post(user_id: int, post: schemas.PostBase, categories: list[int]):
+def create_post(db:Session, user_id: int, post: schemas.PostBase, categories: list[int]):
     for category_id in categories:
-        db_category = get_category_by_id(category_id)
+        db_category = get_category_by_id(db, category_id)
 
         if db_category is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found.")    
@@ -44,17 +43,17 @@ def create_post(user_id: int, post: schemas.PostBase, categories: list[int]):
         id=db_post.id, 
         user_id=db_post.user_id, 
         **post.model_dump(),
-        categories=[get_category_by_id(category_id) for category_id in categories]            
+        categories=[get_category_by_id(db, category_id) for category_id in categories]            
     )
 
-def update_post(post_id: int, post: schemas.PostBase, categories: list[int]):
+def update_post(db:Session, post_id: int, post: schemas.PostBase, categories: list[int]):
     db_post = db.query(models.Post).filter(models.Post.id == post_id).first()
     for key, value in vars(post).items():
         setattr(db_post, key, value) if value else None
     db.commit()
     db.refresh(db_post)
     for category_id in categories:
-        db_category = get_category_by_id(category_id)
+        db_category = get_category_by_id(db, category_id)
         if db_category is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found.")
         db_post_category = db.query(PostCategory).filter(PostCategory.post_id == post_id, PostCategory.category_id == category_id).first()
@@ -77,10 +76,10 @@ def update_post(post_id: int, post: schemas.PostBase, categories: list[int]):
         title=db_post.title,
         content=db_post.content,
         header_image=db_post.header_image,
-        categories=[get_category_by_id(category.id) for category in db_post.categories]
+        categories=[get_category_by_id(db, category.id) for category in db_post.categories]
     )
 
-def delete_post(post_id: int):
+def delete_post(db:Session, post_id: int):
     db_post = db.query(models.Post).filter(models.Post.id == post_id).first()
     db.delete(db_post)
     db.commit()

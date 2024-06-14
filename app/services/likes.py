@@ -1,12 +1,10 @@
 from fastapi import HTTPException
-from app.config.database import get_db
+from sqlalchemy.orm import Session
 
 from app.models.likes import Like
 from app.models.posts import Post
 
-db = next(get_db())
-
-def create_like(post_id: int, user_id: int):
+def create_like(db:Session, post_id: int, user_id: int):
     db_like = db.query(Like).filter(Like.user_id == user_id, Like.post_id == post_id).first()
 
     if db_like:
@@ -19,7 +17,7 @@ def create_like(post_id: int, user_id: int):
     return {"post_id": post_id, "count": len(like.post.likes)}
 
 
-def delete_like(post_id: int, user_id: int):
+def delete_like(db:Session, post_id: int, user_id: int):
     like = db.query(Like).filter(Like.user_id == user_id, Like.post_id == post_id).first()
 
     if not like:
@@ -30,7 +28,7 @@ def delete_like(post_id: int, user_id: int):
 
     return {"post_id": post_id, "count": len(like.post.likes)}
 
-def get_post_likes(post_id: int):
+def get_post_likes(db:Session, post_id: int):
     post = db.query(Post).filter(Post.id == post_id).first()
 
     if not post:
@@ -38,7 +36,7 @@ def get_post_likes(post_id: int):
 
     return {"post_id": post_id, "count": len(post.likes)}
 
-def get_user_likes(user_id: int):
+def get_user_likes(db:Session, user_id: int):
     likes = db.query(Like).filter(Like.user_id == user_id).all()
 
     return  [{"post_id": like.post_id} for like in likes]

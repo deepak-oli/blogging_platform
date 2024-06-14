@@ -4,9 +4,12 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from app.utils.password_hash import verify_password
-from .users import get_user_by_email
 from app.schemas.users import UserCreate, Token
+
+from .users import get_user_by_email
+
+from app.utils.password_hash import verify_password
+
 from app.constants.env import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
 
 ALGORITHM = "HS256"
