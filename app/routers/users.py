@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.config.database import get_db
 
+from app.models.users import Role
 from app.schemas.users import User
 
 from app.services.auth import Auth
@@ -15,12 +16,16 @@ router = APIRouter()
 
 @router.get("/users/", tags=["users"], response_model=list[User])
 def read_users(db:Session = Depends(get_db), dependencies=Depends(Auth())):
+    if dependencies['role'] != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Forbidden.")
     db_users = users.get_users(db)
     return db_users
 
 
 @router.get("/users/{user_id}", tags=["users"], response_model=User)
 def read_user(user_id: int, db:Session = Depends(get_db), dependencies=Depends(Auth())):
+    if dependencies['user_id'] != user_id and dependencies['role'] != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Forbidden.")
     db_user = users.get_user(db, user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found.")
@@ -49,7 +54,7 @@ def update_password(current_password: str, new_password: str, db:Session = Depen
 
 @router.delete("/users/{user_id}", tags=["users"], response_model=User)
 def delete_user(user_id: int, db:Session = Depends(get_db), dependencies=Depends(Auth())):
-    if dependencies['user_id'] != user_id:
+    if dependencies['user_id'] != user_id and dependencies['role'] != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Forbidden.")
     db_user = users.get_user(db, user_id)
     if db_user is None:

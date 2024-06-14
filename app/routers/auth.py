@@ -12,8 +12,8 @@ router = APIRouter()
 
 
 @router.post("/login/", tags=["auth"], response_model=Token)
-def login(request: Login):
-    return auth.login(request)
+def login(request: Login, db:Session=Depends(get_db)):
+    return auth.login(db, request)
 
 
 @router.post("/register/", tags=["auth"], response_model=User)

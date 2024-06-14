@@ -3,8 +3,12 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 
 from app.schemas.users import UserCreate, Token
+
+from .users import get_user
+from app.config.database import get_db
 
 from .users import get_user_by_email
 
@@ -14,8 +18,8 @@ from app.constants.env import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
 
 ALGORITHM = "HS256"
 
-def authenticate_user(email: str, password: str):
-    user = get_user_by_email(email)
+def authenticate_user(db:Session, email: str, password: str):
+    user = get_user_by_email(db, email)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -52,8 +56,8 @@ def decode_token(token: str):
         )
 
 
-def login(request: UserCreate):
-    user = authenticate_user(request.email, request.password)
+def login(db: Session, request: UserCreate):
+    user = authenticate_user(db, request.email, request.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -82,9 +86,19 @@ class Auth(HTTPBearer):
             if not payload:
                 raise HTTPException(
                     status_code=403, detail="Invalid token or expired token.")
+            user_id = payload.get("sub")
+            if not user_id:
+                raise HTTPException(
+                    status_code=403, detail="Invalid token or expired token.")
+            db = next(get_db())
+            user = get_user(db, user_id)
+            if not user:
+                raise HTTPException(
+                    status_code=403, detail="User not found.")
             return {
                 "user_id": payload.get("sub"),
-                "token": credentials.credentials
+                "token": credentials.credentials,
+                "role": user.role
             }
         else:
             raise HTTPException(
