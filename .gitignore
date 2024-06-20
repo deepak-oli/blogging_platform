@@ -10,3 +10,4 @@ dist
 *.sql
 *.log
 alembic/versions/*
+!alembic/versions/__init__.py
