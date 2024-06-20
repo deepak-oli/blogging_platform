@@ -106,6 +106,9 @@ Authorization: Bearer <token>
 
 ## Database Migrations
 This project uses Alembic for database migrations. To run migrations, use:
+
+First, add your db url to sqlalchemy.url in alembic.ini file `sqlalchemy.url = sqlite:///blog_platform.db` then, run
+
 ```bash
 alembic upgrade head
 ```
