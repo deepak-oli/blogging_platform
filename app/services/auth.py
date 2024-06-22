@@ -5,7 +5,7 @@ from fastapi import HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from app.schemas.users import UserCreate, Token
+from app.schemas.users import UserCreate, LoginResponse
 
 from .users import get_user
 from app.config.database import get_db
@@ -68,7 +68,7 @@ def login(db: Session, request: UserCreate):
     access_token = create_access_token(
         data={"sub": user.id}, expires_delta=access_token_expires
     )
-    return Token(access_token=access_token, token_type="bearer")
+    return LoginResponse(access_token=access_token, token_type="bearer", user=user)
 
 
 # TODO: implement role based authentication
